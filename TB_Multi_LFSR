@@ -1,0 +1,43 @@
+`timescale 1ns / 1ps
+
+module TB_Multi_LFSR;
+
+    reg clk;
+    reg rst;
+    reg [1:0] mode;
+    wire [15:0] lfsr_out;
+
+    // 實體化頂層模組
+    Multi_LFSR UUT (
+        .clk(clk),
+        .rst(rst),
+        .mode(mode),
+        .lfsr_out(lfsr_out)
+    );
+
+    // 產生 100MHz 時脈 (週期 10ns)
+    always #5 clk = ~clk;
+
+    initial begin
+        // 初始化
+        clk = 0;
+        rst = 1;
+        mode = 2'b00;
+        
+        #20;
+        rst = 0; // 解除 Reset
+        
+        // 測試模式 00: 跑 4-bit LFSR
+        #300; 
+        
+        // 測試模式 01: 跑 8-bit LFSR
+        mode = 2'b01;
+        #500;
+        
+        // 測試模式 10: 跑 16-bit LFSR
+        mode = 2'b10;
+        #500;
+        
+        $stop; // 暫停模擬
+    end
+endmodule
