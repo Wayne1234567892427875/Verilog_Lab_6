@@ -1,0 +1,41 @@
+`timescale 1ns / 1ps
+
+module Top_LFSR_System (
+    input clk,               // 系統主時脈 (例如 100MHz)
+    input rst,               // 重置按鈕
+    input [1:0] div_mode,    // 開關：選擇除頻倍率 (c)
+    input [1:0] duty_mode,   // 開關：選擇 Duty Cycle (d)
+    input [1:0] lfsr_mode,   // 開關：選擇 LFSR 長度 (b)
+    output [3:0] LED_out    // 輸出：連接到實體 LED (a)
+);
+
+    // ==========================================
+    // 內部訊號宣告 (連接兩個模組的橋樑)
+    // ==========================================
+    wire slow_clk;           // 這是除頻器產生出來的慢時脈
+    wire [15:0] full_lfsr_out;
+    // ==========================================
+    // 模組 1: 可程式化除頻器 (產生慢時脈)
+    // ==========================================
+    Programmable_Divider u_Divider (
+        .clk(clk),
+        .rst(rst),
+        .sel_div(div_mode),
+        .sel_duty(duty_mode),
+        .clk_out(slow_clk)   // 輸出接到 wire 上
+    );
+
+    // ==========================================
+    // 模組 2: 多模式 LFSR (吃慢時脈)
+    // ==========================================
+    // 【關鍵核心】：這裡的 .clk 接的是 slow_clk，而不是系統的 clk！
+    Multi_LFSR u_LFSR (
+        .clk(slow_clk),      
+        .rst(rst),
+        .mode(lfsr_mode),
+        .lfsr_out(full_lfsr_out)   // 直接將 LFSR 結果丟給 LED
+    );
+    
+    assign LED_out = full_lfsr_out[3:0];
+
+endmodule
