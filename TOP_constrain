@@ -1,0 +1,57 @@
+## =========================================================
+## Arty S7-25 Master Constraints (配合 Top_LFSR_System)
+## =========================================================
+
+## 🕒 系統主時脈 Clock (100 MHz)
+set_property PACKAGE_PIN F14 [get_ports clk]
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+create_clock -period 10.000 -name clk100 -waveform {0.000 5.000} [get_ports clk]
+
+## 🛑 重置按鈕 Reset (綁定到 BTN3，Active-High 完美對應程式碼)
+set_property PACKAGE_PIN H13 [get_ports rst]
+set_property IOSTANDARD LVCMOS33 [get_ports rst]
+
+## =========================================================
+## 開關 (Switches) & 按鈕 (Buttons) 輸入區
+## =========================================================
+
+## 🎚️ LFSR 長度切換 lfsr_mode[1:0] (綁定到 SW1, SW0)
+set_property PACKAGE_PIN H14 [get_ports {lfsr_mode[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {lfsr_mode[0]}]
+set_property PACKAGE_PIN H18 [get_ports {lfsr_mode[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {lfsr_mode[1]}]
+
+## 🎚️ 除頻倍率切換 div_mode[1:0] (綁定到 SW3, SW2)
+set_property PACKAGE_PIN G18 [get_ports {div_mode[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {div_mode[0]}]
+set_property PACKAGE_PIN M5 [get_ports {div_mode[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {div_mode[1]}]
+
+## 🔘 Duty Cycle 切換 duty_mode[1:0] (綁定到 BTN1, BTN0)
+## 注意：這裡將原來的 duty_sel 改成 duty_mode 以符合 Verilog 變數名稱
+set_property PACKAGE_PIN G15 [get_ports {duty_mode[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {duty_mode[0]}]
+set_property PACKAGE_PIN K16 [get_ports {duty_mode[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {duty_mode[1]}]
+
+
+## =========================================================
+## 💡 LED 輸出區
+## 注意：這裡將原來的 lfsr_out 改成 LED_out 以符合 Verilog 變數名稱
+## =========================================================
+
+## LED_out[0] 對應實體 LD0 (最右邊的燈)
+set_property PACKAGE_PIN E18 [get_ports {LED_out[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[0]}]
+
+## LED_out[1] 對應實體 LD1
+set_property PACKAGE_PIN F13 [get_ports {LED_out[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[1]}]
+
+## LED_out[2] 對應實體 LD2
+set_property PACKAGE_PIN E13 [get_ports {LED_out[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[2]}]
+
+## LED_out[3] 對應實體 LD3 (最左邊的燈)
+set_property PACKAGE_PIN H15 [get_ports {LED_out[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[3]}]
