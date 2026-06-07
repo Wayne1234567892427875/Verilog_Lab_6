@@ -1,0 +1,67 @@
+`timescale 1ns / 1ps
+
+module Programmable_Divider(
+    input clk,
+    input rst,
+    input [1:0] sel_div,   // 開關 1：選擇除頻倍率
+    input [1:0] sel_duty,  // 開關 2：選擇 Duty Cycle
+    output reg clk_out
+);
+
+    // 7-bit 計數器最大可以數到 127，足夠我們處理「除以100」(從 0 數到 99)
+    reg [26:0] counter; 
+    reg [26:0] max_count;
+    reg [26:0] high_threshold;
+
+    // =========================================================
+    // 第一個 MUX：決定除頻倍率 (MAX_COUNT)
+    // =========================================================
+    always @(*) begin
+        case(sel_div)
+            2'b00: max_count = 27'd9_999_999;  // 模擬板子除以 1000萬 -> 10Hz (1秒跳1次)，模擬電路除 10 即可
+            2'b01: max_count = 27'd4_999_999;  // 模擬板子除以 500萬 -> 20 Hz (1秒跳2次)
+            2'b10: max_count = 27'd1_999_999;  // 模擬板子除以 200萬 -> 50 Hz (1秒跳5次)
+            2'b11: max_count = 27'd999_999;   // 模擬板子除以 100萬 -> 100 Hz (1秒跳10次)
+            default: max_count = 27'd9_999_999;
+        endcase
+    end
+
+    // =========================================================
+    // 第二個 MUX：決定 Duty Cycle (HIGH_THRESHOLD)
+    // 技巧：在硬體中，(x >> 1) 等於 (x / 2)，(x >> 2) 等於 (x / 4)
+    // 這種寫法不用合成複雜的除法器，省下極大量的 LUT！
+    // =========================================================
+    always @(*) begin
+        case(sel_duty)
+            2'b00: high_threshold = (max_count + 1) >> 2;           // 25%  (總數 / 4)
+            2'b01: high_threshold = (max_count + 1) >> 1;           // 50%  (總數 / 2)
+            2'b10: high_threshold = ((max_count + 1) >> 2) * 3;     // 75%  (總數 / 4 * 3)
+            2'b11: high_threshold = max_count;                      // 接近 100% 恆亮
+            default: high_threshold = (max_count + 1) >> 1;
+        endcase
+    end
+
+    // =========================================================
+    // 計數器與比較器 (核心邏輯)
+    // =========================================================
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            counter <= 7'd0;
+            clk_out <= 1'b0;
+        end else begin
+            // 1. 計數器迴圈
+            if (counter >= max_count) begin
+                counter <= 7'd0; // 數到上限，歸零
+            end else begin
+                counter <= counter + 1'b1;
+            end
+
+            // 2. 比較器：決定當下要輸出 1 還是 0
+            if (counter < high_threshold) begin
+                clk_out <= 1'b1; // 在門檻內，輸出高電位
+            end else begin
+                clk_out <= 1'b0; // 超過門檻，輸出低電位
+            end
+        end
+    end
+endmodule
