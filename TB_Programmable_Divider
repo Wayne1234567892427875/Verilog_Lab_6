@@ -1,0 +1,59 @@
+`timescale 1ns / 1ps
+
+module TB_Programmable_Divider;
+    reg clk;
+    reg rst;
+    reg [1:0] sel_div;
+    reg [1:0] sel_duty;
+    wire clk_out;
+
+    // 實體化設計模組
+    Programmable_Divider UUT (
+        .clk(clk),
+        .rst(rst),
+        .sel_div(sel_div),
+        .sel_duty(sel_duty),
+        .clk_out(clk_out)
+    );
+
+    // 產生 100MHz 的系統時脈 (週期 = 10ns)
+    always #5 clk = ~clk; 
+
+    initial begin
+        // 初始化設定
+        clk = 0;
+        rst = 1;
+        sel_div = 2'b00;  // 預設：除以 10
+        sel_duty = 2'b01; // 預設：50% Duty Cycle
+        
+        // 在 T=20ns 時解除 Reset (此時 clk 剛好在低電位，很安全)
+        #20 rst = 0;      
+
+        // ? 劇本 1：除以 10, 50% Duty 
+        // 慢週期 = 10ns * 10 = 100ns。等 3 個週期 = 300ns
+        #300;
+
+        // ? 劇本 2：切換到 25% Duty (除頻倍率仍為 10)
+        // 慢週期 = 10ns * 10 = 100ns。等 3 個週期 = 300ns
+        sel_duty = 2'b00;
+        #300;
+
+        // ? 劇本 3：切換到 75% Duty (除頻倍率仍為 10)
+        // 慢週期 = 10ns * 10 = 100ns。等 3 個週期 = 300ns
+        sel_duty = 2'b10;
+        #300;
+
+        // ? 劇本 4：切換整體頻率為 除以 20，Duty 不變 (75%)
+        // 慢週期 = 10ns * 20 = 200ns。等 3 個週期 = 600ns
+        sel_div = 2'b01;
+        #600;
+
+        // ? 劇本 5：切換為 除以 50，50% Duty
+        // 慢週期 = 10ns * 50 = 500ns。等 3 個週期 = 1500ns
+        sel_div = 2'b10;
+        sel_duty = 2'b01;
+        #1500;
+
+        $stop;
+    end
+endmodule
